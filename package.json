@@ -1,0 +1,33 @@
+{
+  "name": "genkitii",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@genkit-ai/express": "^1.40.1",
+    "@genkit-ai/google-genai": "^1.40.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "genkit": "^1.40.1",
+    "genkitx-pinecone": "^1.40.1",
+    "llm-chunk": "^0.0.1",
+    "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "@types/pdf-parse": "^1.1.5",
+    "genkit-cli": "^1.40.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
+  }
+}
