@@ -25,3 +25,4 @@ app.get("/", async (req, res) => {
 app.listen(8080, () => {
   console.log("Express server listening on http://localhost:8080");
 });
+export default app;
