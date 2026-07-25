@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import { expressHandler } from "@genkit-ai/express";
 import { getIngredientsOnSale, indexMenu } from "./genkit/bargainChefFlow.js";
 
 const app = express();
