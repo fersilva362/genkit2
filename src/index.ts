@@ -20,9 +20,13 @@ app.post("/", async (req, res) => {
 });
 
 app.get("/", async (req, res) => {
-  const pdfPath = path.join(process.cwd(), "pdfMenu.pdf");
-  const response = await indexMenu({ filePath: pdfPath });
-  res.json(response);
+  try {
+    const pdfPath = path.join(process.cwd(), "pdfMenu.pdf");
+    const response = await indexMenu({ filePath: pdfPath });
+    res.json(response);
+  } catch (error) {
+    res.send(error);
+  }
 });
 
 if (process.env.NODE_ENV !== "production") {
