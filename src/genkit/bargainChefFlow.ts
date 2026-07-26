@@ -1,3 +1,16 @@
+if (typeof globalThis.DOMMatrix === "undefined") {
+  (globalThis as any).DOMMatrix = class DOMMatrix {
+    constructor() {}
+    multiply() {
+      return this;
+    }
+    scale() {
+      return this;
+    }
+    // Añade aquí cualquier método que el log te indique que falta
+  };
+}
+
 import { googleAI } from "@genkit-ai/google-genai";
 import { Document, genkit, z } from "genkit";
 import "dotenv/config";
