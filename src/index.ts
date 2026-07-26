@@ -1,4 +1,17 @@
+if (typeof globalThis.DOMMatrix === "undefined") {
+  (globalThis as any).DOMMatrix = class DOMMatrix {
+    constructor() {}
+    multiply() {
+      return this;
+    }
+    scale() {
+      return this;
+    }
+    // Añade aquí cualquier método que el log te indique que falta
+  };
+}
 import express from "express";
+
 import cors from "cors";
 import { getIngredientsOnSale, indexMenu } from "./genkit/bargainChefFlow.js";
 import path from "path";
