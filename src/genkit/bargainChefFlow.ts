@@ -1,15 +1,12 @@
 import { googleAI } from "@genkit-ai/google-genai";
 import { Document, genkit, z } from "genkit";
 import "dotenv/config";
-import pinecone, {
-  pineconeIndexerRef,
-  pineconeRetrieverRef,
-} from "genkitx-pinecone";
-import { apiKey } from "genkit/context";
+import { pineconeIndexerRef, pineconeRetrieverRef } from "genkitx-pinecone";
 import path from "path";
 import { PDFParse } from "pdf-parse";
-import { readFile, readFileSync } from "fs";
+import { readFileSync } from "fs";
 import { chunk } from "llm-chunk";
+import pinecone from "genkitx-pinecone";
 
 export const CONSTANTS = {
   API_GOOGLE: process.env.GEMINI_API_KEY!,
@@ -22,10 +19,12 @@ const ai = genkit({
     pinecone([
       {
         indexId: "bob-facts",
-        embedder: googleAI.embedder("gemini-embedding-001"),
+        embedder: "googleai/gemini-embedding-001",
         clientParams: { apiKey: CONSTANTS.API_PINECONE },
       },
-    ]),
+    ]) as any,
+
+    ,
   ],
   model: googleAI.model("gemini-flash-latest"),
 });
