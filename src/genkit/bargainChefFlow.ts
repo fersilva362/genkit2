@@ -1,31 +1,23 @@
 import { googleAI } from "@genkit-ai/google-genai";
 import { Document, genkit, z } from "genkit";
 import "dotenv/config";
-import { pineconeIndexerRef, pineconeRetrieverRef } from "genkitx-pinecone";
+//import { pineconeIndexerRef, pineconeRetrieverRef } from "genkitx-pinecone";
 import path from "path";
 import { PDFParse } from "pdf-parse";
 import { readFileSync } from "fs";
 import { chunk } from "llm-chunk";
-import pinecone from "genkitx-pinecone";
+import { Pinecone } from "@pinecone-database/pinecone";
 
 export const CONSTANTS = {
   API_GOOGLE: process.env.GEMINI_API_KEY!,
   API_PINECONE: process.env.PINECONE_API_KEY!,
 };
 
-const ai = genkit({
-  plugins: [
-    googleAI({ apiKey: CONSTANTS.API_GOOGLE }),
-    pinecone([
-      {
-        indexId: "bob-facts",
-        embedder: "googleai/gemini-embedding-001",
-        clientParams: { apiKey: CONSTANTS.API_PINECONE },
-      },
-    ]) as any,
+const pinecone = new Pinecone({ apiKey: CONSTANTS.API_PINECONE });
+const index = pinecone.index({ name: "bob-facts" });
 
-    ,
-  ],
+const ai = genkit({
+  plugins: [googleAI({ apiKey: CONSTANTS.API_GOOGLE })],
   model: googleAI.model("gemini-flash-latest"),
 });
 
@@ -53,10 +45,10 @@ async function extractTextFromPdf(filePath: string) {
     await parser.destroy();
   }
 }
-export const bobFactsIndexer = pineconeIndexerRef({
+/* export const bobFactsIndexer = pineconeIndexerRef({
   indexId: "bob-facts",
 });
-
+ */
 export const indexMenu = ai.defineFlow(
   {
     name: "indexMenu",
@@ -86,11 +78,52 @@ export const indexMenu = ai.defineFlow(
         return Document.fromText(text, { filePath });
       });
 
+      const records = [];
+
+      // Use 'for...of' to iterate through Document objects
+      for (let i = 0; i < documents.length; i++) {
+        const doc = documents[i];
+        if (!doc) {
+          return {
+            success: false,
+            documentsIndexed: 0,
+            error: "error",
+          };
+        }
+
+        // Generate embedding
+        const embedder_document = await ai.embed({
+          embedder: googleAI.embedder("gemini-embedding-001"), // or "text-embedding-004"
+          content: doc,
+        });
+
+        if (!embedder_document || !embedder_document[0]?.embedding) {
+          return {
+            success: false,
+            documentsIndexed: 0,
+            error: "error",
+          };
+        }
+
+        // Push record formatted specifically for Pinecone
+        records.push({
+          id: `${filePath}-chunk-${i}`, // Unique ID per vector
+          values: embedder_document[0].embedding, // Vector float array
+          metadata: {
+            text: doc.text, // Store text in metadata so you can retrieve it later
+            filePath: filePath,
+          },
+        });
+      }
+
+      // 4. Upsert all records to your Pinecone index
+      await index.upsert({ records });
+
       // Add documents to the index
-      await ai.index({
-        indexer: bobFactsIndexer,
+      /* await ai.index({
+        indexer,
         documents,
-      });
+      }); */
 
       return {
         success: true,
@@ -108,9 +141,9 @@ export const indexMenu = ai.defineFlow(
   },
 );
 
-export const bobFactsRetriever = pineconeRetrieverRef({
+/* export const bobFactsRetriever = pineconeRetrieverRef({
   indexId: "bob-facts",
-});
+}); */
 
 export const getIngredientsOnSale = ai.defineTool(
   {
@@ -129,14 +162,42 @@ export const getIngredientsOnSale = ai.defineTool(
   async (input) => {
     const { craving: query } = input;
 
-    let docs = await ai.retrieve({
+    const queryEmbedding = await ai.embed({
+      embedder: googleAI.embedder("gemini-embedding-001"), // or "gemini-embedding-001"
+      content: query,
+    });
+    if (!queryEmbedding?.[0]?.embedding) {
+      throw new Error("Failed to generate embedding for query");
+    }
+
+    const queryResponse = await index.query({
+      vector: queryEmbedding[0].embedding,
+      topK: 3, // Equivalent to k: 3
+      includeMetadata: true, // Needed to retrieve stored document text and metadata
+    });
+
+    /* let docs = await ai.retrieve({
       retriever: bobFactsRetriever,
       query,
       options: {
         k: 3,
       },
+    }); */
+    if (queryResponse.matches.length == 0) {
+      throw new Error("Failed to generate embedding for query 1");
+    }
+
+    const docs = queryResponse.matches.map((match) => {
+      return new Document({
+        content: [{ text: (match.metadata?.text as string) || "" }],
+        metadata: {
+          id: match.id,
+          score: match.score,
+          ...match.metadata,
+        },
+      });
     });
-    console.log(docs);
+
     try {
       const { text } = await ai.generate({
         model: googleAI.model("gemini-flash-latest"),
