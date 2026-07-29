@@ -1,15 +1,20 @@
+// MUST BE AT THE VERY TOP OF YOUR ENTRY FILE
+import * as canvas from "@napi-rs/canvas";
+
 if (typeof globalThis.DOMMatrix === "undefined") {
-  (globalThis as any).DOMMatrix = class DOMMatrix {
-    constructor() {}
-    multiply() {
-      return this;
-    }
-    scale() {
-      return this;
-    }
-    // Añade aquí cualquier método que el log te indique que falta
-  };
+  // @ts-ignore
+  globalThis.DOMMatrix = canvas.DOMMatrix;
 }
+if (typeof globalThis.ImageData === "undefined") {
+  // @ts-ignore
+  globalThis.ImageData = canvas.ImageData;
+}
+if (typeof globalThis.Path2D === "undefined") {
+  // @ts-ignore
+  globalThis.Path2D = canvas.Path2D;
+}
+
+// Now import your Genkit flows / PDF libraries...
 import express from "express";
 
 import cors from "cors";
