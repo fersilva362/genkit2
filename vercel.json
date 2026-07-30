@@ -3,7 +3,13 @@
   "builds": [
     {
       "src": "src/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+          "pdfMenu.pdf"
+        ]
+      }
     }
   ],
   "routes": [
